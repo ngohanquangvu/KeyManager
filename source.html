@@ -1,0 +1,113 @@
+def add_license(key):
+
+    # Token của bạn
+    token = "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"
+
+    # Tạo một đối tượng 'Github' với token của bạn
+    g = Github(token)
+
+    # Lấy kho lưu trữ bằng cách sử dụng tên của nó
+    repo = g.get_repo("ngohanquangvu/MusicPLayer")
+
+    # Lấy nội dung của tệp bạn muốn chỉnh sửa
+    file = repo.get_contents("key.html", ref="main")
+    old_content = requests.get("https://raw.githubusercontent.com/ngohanquangvu/MusicPLayer/main/key.html").text
+
+
+    # Nội dung mới bạn muốn cập nhật
+    new_content = old_content+key+"\n"
+
+    # Chỉnh sửa tệp
+    repo.update_file(file.path, "commit message", new_content, file.sha, branch="main")
+
+def delete_license(key):
+
+    # Token của bạn
+    token = "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"
+
+    # Tạo một đối tượng 'Github' với token của bạn
+    g = Github(token)
+
+    # Lấy kho lưu trữ bằng cách sử dụng tên của nó
+    repo = g.get_repo("ngohanquangvu/MusicPLayer")
+
+    # Lấy nội dung của tệp bạn muốn chỉnh sửa
+    file = repo.get_contents("key.html", ref="main")
+    old_content = requests.get("https://raw.githubusercontent.com/ngohanquangvu/MusicPLayer/main/key.html").text.replace(key+"\n","")
+
+
+    # Nội dung mới bạn muốn cập nhật
+    new_content = old_content
+
+    # Chỉnh sửa tệp
+    repo.update_file(file.path, "commit message", new_content, file.sha, branch="main")
+
+
+def add_key():
+    global status
+    key = key_entry.get()
+    days = int(days_entry.get())
+    user = user_entry.get()
+    expiry_date = (datetime.now() + timedelta(days=days)).strftime("%d/%m/%Y")
+    license_key = f'{key}|{expiry_date}|{str(user)}'
+    try:
+        add_license(license_key)
+        tree.insert('', 'end', values=(key, expiry_date, str(user)))
+        key_entry.delete(0, END)
+        user_entry.delete(0, END)
+        days_entry.delete(0, END)
+    except:
+        messagebox.showinfo("Lỗi kết nối")
+        
+
+def delete_key():
+    selected_items = tree.selection()
+    for item in selected_items:
+            key = "|".join(list(map(str, tree.item(item)["values"])))
+            delete_license(key)
+            tree.delete(item)
+
+root = Tk()
+root.title("LICENSE KEY MANAGER")
+
+tree = ttk.Treeview(root, columns=('License Key', 'Expiry Date', 'User'), show='headings')
+tree.heading('License Key', text='License Key')
+tree.column("License Key", width=300, stretch=YES)
+tree.heading('Expiry Date', text='Expiry Date')
+tree.heading('User', text='User')
+tree.pack()
+try:
+    a = requests.get("https://raw.githubusercontent.com/ngohanquangvu/MusicPLayer/main/key.html").text.split("\n")
+    if len(a)>0:
+        for i in a:
+            try:
+                i = i.split("|")
+                tree.insert('', 'end', values=(str(i[0]),str(i[1]),str(i[2])))
+            except:pass
+    else:pass
+except Exception as e:
+    messagebox.showinfo(e)
+
+frame_entry = Frame(root)
+frame_entry.pack()
+
+key_entry = Entry(frame_entry, width=50)
+key_entry.grid(row=0, column=0)
+key_text = Label(frame_entry, text="LICENSE KEY", anchor = CENTER)
+key_text.grid(row=1, column=0)
+days_entry = Entry(frame_entry)
+days_entry.grid(row=0, column=1)
+days_text = Label(frame_entry, text="DAYS", anchor = CENTER)
+days_text.grid(row=1, column=1)
+user_entry = Entry(frame_entry)
+user_entry.grid(row=0, column=2)
+user_text = Label(frame_entry, text="USERNAME", anchor = CENTER)
+user_text.grid(row=1, column=2)
+
+add_button = Button(root, text="Add Key", command=add_key)
+add_button.pack()
+
+delete_button = Button(root, text="Delete Key", command=delete_key)
+delete_button.pack()
+
+root.mainloop()
